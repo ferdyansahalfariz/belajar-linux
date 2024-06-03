@@ -1,84 +1,111 @@
-A. Install wsl
+# A. Install wsl
 
 1. langkah pertama yaitu menginstall wsl dengan kode berikut:
--wsl --install
+```
+wsl --install
+```
 
-2. kemudian aktifkan wsl dengan membuka control panel-program&features-turn windows feature on or off-centang wsl kemudian restart
+2. kemudian aktifkan wsl dengan membuka control panel->program&features->turn windows feature on or off->centang wsl kemudian restart device
 
-3. download centOS 8 pada link beriut:
+3. download centOS 8 pada link berikut:
 https://github.com/mishamosher/CentOS-WSL/releases/tag/8.4-2105
 
 4. extract & install sampai selesai dan buka file CentOS8.exe
 
 5. terakhir update system repo nya dengan command:
--yum update -y
+```
+yum update -y
+```
 
-
-B. Membuat user dan mengatur sudoers user
+# B. Membuat user dan mengatur sudoers user
 1. buka centOS yang sudah terinstall di user root
 
 2. tambahkan user baru dengan perintah:
--adduser userA
+```
+adduser userA
+```
 
 3. atur password user dengan perintah:
--passwd userA
+```
+passwd userA
+```
 
 4. masuk ke user dengan perintah:
--su - userA
+```
+su - userA
+```
 
 5. untuk mengatur user sudoers, gunakan perintah:
--usermod -aG wheel userA
+```
+usermod -aG wheel userA
+```
 
 6. periksa apakah user sudah termasuk sudoers dengan perintah:
--sudo whoami
+```
+sudo whoami
+```
+![Screenshot (3 1)](https://github.com/ferdyansahalfariz/belajar-linux/assets/96871156/64dac1dd-2d43-4935-b090-8b4a803b19cd)
 
-
-C. Membuat direktori dan aplikasi.log dengan CentOS kemudian di-Zip
+# C. Membuat direktori dan aplikasi.log dengan CentOS kemudian di-Zip
 1. Masuk ke user yang sudah ada dengan perintah:
--su - userA
+```
+su - userA
+```
 
 2. buat direktori dengan perintah:
--mkdir -p file
+```
+mkdir -p file
+```
 
 3. buat file aplikasi.log dengan perintah:
--touch file/aplikasi.log
+```
+touch file/aplikasi.log
+```
 
 4. install terlebih dahulu zip dengan perintah:
 -sudo yum install zip
 
 5. terakhir zip direktori 'file' dengan perintah:
--zip -r file.zip file
-
-
-D. Perintah-perintah lain dalam linux
+```
+zip -r file.zip file
+```
+![Screenshot (5)](https://github.com/ferdyansahalfariz/belajar-linux/assets/96871156/576d2c0f-45c5-46cb-a7e6-ccd1e689cdfe)
+# D. Perintah-perintah lain dalam linux
 1. SSH (Secure Shell):
 Digunakan untuk mengakses dan mengelola server dari jarak jauh.
+```
 ssh user@hostname
+```
 
 2. cp (Copy):
 Digunakan untuk menyalin file atau directory.Contoh:
-
+```
 cp file-awal file-tujuan
 cp -r direktori-awal direktori-tujuan
+```
 
 3. mv (Move):
 Digunakan untuk memindahkan atau mengganti nama file atau directory.Contoh:
-
+```
 mv file-awal file-tujuan
+```
 
 4. rm (Remove):
 Digunakan untuk menghapus file atau directory.Contoh:
-
+```
 rm file
 rm -r directory
+```
 
 5. chown (Change Ownership):
 Digunakan untuk mengubah pemilik file atau directory.Contoh:
-
+```
 sudo chown user:group file
+```
 
 6. chmod (Change Mode):
 Digunakan untuk mengubah izin file atau directory.Contoh:
-
+```
 chmod permissions file
 chmod 755 file
+```
