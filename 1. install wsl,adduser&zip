@@ -1,1 +1,84 @@
+A. Install wsl
 
+1. langkah pertama yaitu menginstall wsl dengan kode berikut:
+-wsl --install
+
+2. kemudian aktifkan wsl dengan membuka control panel-program&features-turn windows feature on or off-centang wsl kemudian restart
+
+3. download centOS 8 pada link beriut:
+https://github.com/mishamosher/CentOS-WSL/releases/tag/8.4-2105
+
+4. extract & install sampai selesai dan buka file CentOS8.exe
+
+5. terakhir update system repo nya dengan command:
+-yum update -y
+
+
+B. Membuat user dan mengatur sudoers user
+1. buka centOS yang sudah terinstall di user root
+
+2. tambahkan user baru dengan perintah:
+-adduser userA
+
+3. atur password user dengan perintah:
+-passwd userA
+
+4. masuk ke user dengan perintah:
+-su - userA
+
+5. untuk mengatur user sudoers, gunakan perintah:
+-usermod -aG wheel userA
+
+6. periksa apakah user sudah termasuk sudoers dengan perintah:
+-sudo whoami
+
+
+C. Membuat direktori dan aplikasi.log dengan CentOS kemudian di-Zip
+1. Masuk ke user yang sudah ada dengan perintah:
+-su - userA
+
+2. buat direktori dengan perintah:
+-mkdir -p file
+
+3. buat file aplikasi.log dengan perintah:
+-touch file/aplikasi.log
+
+4. install terlebih dahulu zip dengan perintah:
+-sudo yum install zip
+
+5. terakhir zip direktori 'file' dengan perintah:
+-zip -r file.zip file
+
+
+D. Perintah-perintah lain dalam linux
+1. SSH (Secure Shell):
+Digunakan untuk mengakses dan mengelola server dari jarak jauh.
+ssh user@hostname
+
+2. cp (Copy):
+Digunakan untuk menyalin file atau directory.Contoh:
+
+cp file-awal file-tujuan
+cp -r direktori-awal direktori-tujuan
+
+3. mv (Move):
+Digunakan untuk memindahkan atau mengganti nama file atau directory.Contoh:
+
+mv file-awal file-tujuan
+
+4. rm (Remove):
+Digunakan untuk menghapus file atau directory.Contoh:
+
+rm file
+rm -r directory
+
+5. chown (Change Ownership):
+Digunakan untuk mengubah pemilik file atau directory.Contoh:
+
+sudo chown user:group file
+
+6. chmod (Change Mode):
+Digunakan untuk mengubah izin file atau directory.Contoh:
+
+chmod permissions file
+chmod 755 file
