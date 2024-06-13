@@ -1,1 +1,182 @@
+# KSQLDB
 
+Sumber : 
+
+* [ksql](https://ksqldb.io/)
+
+* [youtube](https://www.youtube.com/watch?v=7mGBxG2NhVQ&t=3685s)
+
+KSQL adalah platform streaming SQL yang dibangun di atas Apache Kafka. Ini memungkinkan pengguna untuk menulis kueri SQL untuk memproses aliran data secara real-time yang disimpan di dalam topik Kafka. Dengan menggunakan kueri SQL yang familiar, pengguna dapat melakukan berbagai operasi pada aliran data seperti filter, join, agregasi, transformasi, dan lainnya.
+
+Berikut adalah beberapa fitur utama dari KSQL:
+
+**Kueri SQL untuk Streaming Data**: Pengguna dapat menulis kueri SQL untuk memproses aliran data yang masuk dan menghasilkan hasil secara real-time.
+
+**Sink dan Source**: KSQL mendukung konfigurasi sink dan source untuk mentransfer data dari dan ke Kafka. Ini memungkinkan integrasi dengan sistem eksternal untuk memasukkan atau mengambil data dari Kafka.
+
+**Operasi Streaming**: KSQL mendukung operasi streaming seperti SELECT, JOIN, FILTER, AGGREGATE, dan lainnya, yang memungkinkan pengguna untuk melakukan analisis data yang kompleks dalam aliran data secara real-time.
+
+**Integrasi dengan Kafka Connect**: KSQL dapat berintegrasi dengan Kafka Connect untuk mengakses sumber data eksternal dan menyimpan hasil kueri ke penyimpanan eksternal.
+
+**Antarmuka CLI dan REST**: KSQL menyediakan antarmuka baris perintah (CLI) dan REST API yang memungkinkan pengguna untuk berinteraksi dengan KSQL dan menjalankan kueri SQL.
+
+Dengan KSQL, pengguna dapat dengan mudah menerapkan logika bisnis kompleks pada aliran data secara real-time tanpa perlu menulis kode yang kompleks atau menggunakan alat yang rumit.
+
+Adapun beberapa penjelasan penting mengenai isi dari ksql antaranya yaitu :
+
+**Stream**: Representasi berkelanjutan dari data yang masuk. Data dalam stream bergerak dari satu titik ke titik lainnya dan dapat terus bertambah seiring waktu. Misalnya, stream data sensor suhu yang terus mengirimkan data suhu.
+
+**Table**: Representasi data yang diperbarui secara teratur yang dapat diquery pada waktu tertentu. Data dalam tabel adalah snapshot terbaru dari stream yang mendasarinya pada saat query dieksekusi. Misalnya, tabel informasi pengguna yang diperbarui setiap kali ada perubahan informasi pengguna.
+
+**Transient Query**: Query yang memberikan hasil hanya untuk eksekusi query tersebut dan tidak menyimpan hasilnya. Transient query cocok digunakan untuk keperluan analisis cepat dan sementara.
+
+**Persistent Query**: Query yang berjalan secara terus menerus dan menyimpan hasilnya. Persistent query cocok untuk keperluan pemrosesan data berkelanjutan dan mempertahankan hasil query untuk digunakan di masa mendatang.
+
+## Praktek
+Sebelum memulainya, pastikan terlebih dahulu configurasi dari ksqldb sudah sesuai dan tidak ada masalah, saat membuat dan menjalankan query di ksql, secara otomatis topic maupun schema akan dibuat, jadi pastikan url untuk schema registry sudah disesuaikan agar secara otomatis dapat register dan check schema yang ada.
+
+Untuk memulainya, cukup ketik ksql pada server sampai muncul berikut:
+
+![image](https://github.com/ferdyansahalfariz/belajar-linux/assets/96871156/a866ad88-d0f8-46ba-88d7-d93fcf49b488)
+
+Pada kesempatan kali ini saya akan mencoba untuk membuat sebuah stream, tabel, persistent query, transient query, push query maupun pull query.
+
+1. Sebagai studi kasus, saya akan membuat sebuah stream yang berisi skema berikut:
+
+```
+{
+  "type": "record",
+  "name": "match",
+  "fields": [
+    {"name": "matchId", "type": "string"},
+    {"name": "team", "type": "string"},
+    {"name": "score", "type": "int"}
+  ]
+}
+```
+
+dari skema tersebut, gunakan perintah ini untuk membuat stream:
+
+```
+CREATE STREAM match (matchId VARCHAR, team VARCHAR, score INT) WITH (kafka_topic='matches', value_format='AVRO', partitions=1);
+```
+
+ksql otomatis akan membuat topic matches dengan skema berformat avro. 
+
+2. Untuk menampung total score yang dihasilkan setiap team yang ada, saya akan membuat tabel dengan perintah berikut:
+
+```
+CREATE TABLE currentScore AS
+  SELECT team,
+         SUM(score) AS score
+  FROM match
+  GROUP BY team
+  EMIT CHANGES;
+```
+
+tabel ```currentScore``` akan menjumlahkan score dari setiap team pada tiap data yang diinput melalui stream ```match```. Perintah diatas merupakan salah satu contoh dari persistent query, hal ini berarti bahwa query tersebut akan bertahan seterusnya bahkan jika server dimatikan, jadi query tersebut bekerja dengan mencopy data dari stream ```match``` secara terus menerus untuk dimasukan ke tabel ```currentScore```.
+
+3. Selanjutnya saya akan memberikan salah satu contoh dari push query. Menurut [KsqlDb](https://docs.ksqldb.io/en/latest/concepts/queries/) sendiri, push query adalah jenis query yang memungkinkan klien untuk berlangganan dan menerima hasil query secara real-time saat terjadi perubahan. Contoh penggunaan push query adalah dalam mengambil lokasi geografis pengguna yang berubah secara dinamis. Dengan menggunakan kueri ini, perubahan lokasi pengguna akan "didorong" kepada klien melalui koneksi yang berlangsung lama segera setelah perubahan terjadi. Push query dapat digunakan untuk mengambil data dari stream atau tabel berdasarkan kunci tertentu, serta mendukung operasi SQL lengkap seperti filter, select, group by, partition by, dan join. Push query sangat berguna untuk membangun aplikasi real-time dan aliran kontrol asinkron lainnya. Berikut adalah salah satu push query :
+
+```
+SELECT * FROM match
+  WHERE score >= 3 EMIT CHANGES;
+```
+
+Push query tersebut merupakan query yang akan selalu menampilkan data dari stream match dengan kondisi jika terdapat team yang berhasil mencetak lebih besar atau sama dengan 3 skor, query tersebut akan selalu berjalan, namun dapat berhenti jika dihentikan dengan sengaja.
+
+4. Tanpa menghentikan push query diatas, buka CLI session yang lain selanjutnya lakukan pengisian populasi atau input message ke dalam stream match dengan perintah:
+
+```
+INSERT INTO match (matchId, team, score) VALUES ('match1', 'barca', 3);
+INSERT INTO match (matchId, team, score) VALUES ('match1', 'madrid', 1);
+INSERT INTO match (matchId, team, score) VALUES ('match2', 'valencia', 3);
+INSERT INTO match (matchId, team, score) VALUES ('match2', 'barca', 2);
+INSERT INTO match (matchId, team, score) VALUES ('match3', 'madrid', 5);
+INSERT INTO match (matchId, team, score) VALUES ('match3', 'valencia', 0);
+```
+
+Lihat kembali query push pada langkah nomer 3, seharusnya tabel sudah terisi dengan team yang berhasil mencetak skor 3 atau diatasnya seperti pada sisi kiri gambar:
+
+![image](https://github.com/ferdyansahalfariz/belajar-linux/assets/96871156/0bfc4b36-b7b8-4116-bd8c-f82048331144)
+
+6. sebagai perbandingan, pada gambar diatas merupakan query bertipe pull yang merupakan jenis query yang memungkinkan klien untuk mengambil hasil berdasarkan kondisi saat ini, mirip dengan query pada RDBMS tradisional. Misalnya, pull query untuk lokasi geografis akan meminta koordinat terkini dari pengguna tertentu dan segera mengembalikan hasilnya dengan koneksi yang ditutup.Jadi saat pull dipanggil, maka data yang diambil adalah data saat itu saja, untuk mendapatkan data terupdate, pull query harus dipanggil ulang. berikut adalah query pull:
+
+```
+SELECT * FROM match
+  WHERE score >= 3 AND team = 'barca';
+```
+
+7. Sebagai tambahan, lakukan insert data kembali untuk menunjukan perbedaan kedua query tersebut, saya menambah data berikut:
+
+```
+INSERT INTO match (matchId, team, score) VALUES ('match4', 'barca', 5);
+INSERT INTO match (matchId, team, score) VALUES ('match4', 'valencia', 0);
+```
+
+dari hal tersebut dapat dilihat di sisi kiri bahwa push query secara otomatis bertambah isinya sedangkan untuk sisi kanan, pull query harus dilakukan pemanggilan lagi baru kemudian datanya terupdate.
+
+![image](https://github.com/ferdyansahalfariz/belajar-linux/assets/96871156/eabf8d9f-c94b-4d32-b34c-3edc374cdcd0)
+
+Sebagai catatan, untuk pull maupun push query merupakan sebuah Transient Query yang hanya digunakan saat itu saja tanpa tersimpan di dalam server, untuk memperjelas Transient Query, saya akan membuat 1 query lagi yang berfungsi untuk menampilkan isi dari tabel currentScore yang menunjukan keseluruhan score yang diperoleh masing-masing team berikut:
+
+```
+SELECT * FROM currentScore;
+```
+
+![image](https://github.com/ferdyansahalfariz/belajar-linux/assets/96871156/92fc8fd1-5208-4513-ad23-1bf4e89df527)
+
+## Join
+
+[Join](https://docs.ksqldb.io/en/latest/developer-guide/joins/)
+
+Join adalah kondisi dimana dilakukannya penggabungan antara stream dengan stream, tabel dengan tabel ataupun stream dengan tabel. terdapat beberapa aturan pada join di ksql berikut:
+
+![image](https://github.com/ferdyansahalfariz/belajar-linux/assets/96871156/99b82522-cfff-49ca-836f-f3d198534a72)
+
+pada prakteknya, saya mencoba untuk membuat stream baru dengan judul matchDetail yang mencatat detail dari tiap match dengan atribut ```matchDetailId```,```matchId```,```stadium```, dan ```timestamp```. berikut querynya:
+
+```
+CREATE STREAM matchDetail (
+    matchDetailId STRING,
+    matchId STRING,
+    stadium STRING,
+    timestamp STRING
+) WITH (
+    KAFKA_TOPIC='matchDetail',
+    PARTITIONS=1,
+    VALUE_FORMAT='avro',
+    TIMESTAMP='timestamp',
+    TIMESTAMP_FORMAT='yyyy-MM-dd''T''HH:mm:ssXXX');
+```
+
+setelah itu saya akan melakukan join terhadap 2 stream antara matchDetail dengan match yang sebelumnya telah dibuat melalui stream dengan query:
+
+```
+CREATE STREAM match_detail_stream AS
+SELECT
+    m.matchId,
+    m.team,
+    m.score,
+    md.stadium,
+    md.timestamp
+FROM
+    match m
+JOIN
+    matchDetail md WITHIN 100 DAYS
+ON
+    m.matchId = md.matchId;
+```
+
+Untuk melihat hasilnya, saya menambahkan populasi atau mengirim message dengan isi :
+
+```
+INSERT INTO match (matchId, team, score) VALUES ('match5', 'madrid', 0);
+INSERT INTO match (matchId, team, score) VALUES ('match5', 'valencia', 5);
+INSERT INTO matchDetail (matchDetailId, matchId, stadium, timestamp) VALUES ('matchDetail5','match5', 'harupat', '2024-06-01T16:00:00+07:00');
+```
+
+Terakhir jalankan query : ```SELECT * FROM match_detail_stream;```
+
+Maka akan muncul tabel berikut:
+![image](https://github.com/ferdyansahalfariz/belajar-linux/assets/96871156/d9708091-d2ac-46de-b774-6e5b7007bc4c)
